@@ -91,6 +91,7 @@
     "sade": "^1.4.2",
     "shelljs": "^0.8.3",
     "tiny-glob": "^0.2.6",
+    "tmp-promise": "^2.0.2",
     "ts-jest": "^24.0.2",
     "tslib": "^1.9.3",
     "typescript": "^3.7.3"

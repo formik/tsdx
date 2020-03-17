@@ -21,6 +21,7 @@ import execa from 'execa';
 import shell from 'shelljs';
 import ora from 'ora';
 import semver from 'semver';
+import tmp from 'tmp-promise';
 import { paths } from './constants';
 import * as Messages from './messages';
 import { createBuildConfigs } from './createBuildConfigs';
@@ -112,6 +113,7 @@ prog
     )}]`
   )
   .example('create --template react mypackage')
+  .example('create --template https://github.com/myorg/mytemplate mypackage')
   .action(async (pkg: string, opts: any) => {
     console.log(
       chalk.blue(`
@@ -125,7 +127,7 @@ prog
 `)
     );
     const bootSpinner = ora(`Creating ${chalk.bold.green(pkg)}...`);
-    let template;
+    let template, templateConfig;
     // Helper fn to prompt the user for a different
     // folder name if one already exists
     async function getProjectPath(projectPath: string): Promise<string> {
@@ -159,31 +161,88 @@ prog
         choices: Object.keys(templates),
       });
 
+      let isUrlTemplate = false;
       if (opts.template) {
+        isUrlTemplate = /^https?:\/\/.*$/.test(opts.template);
         template = opts.template.trim();
-        if (!prompt.choices.includes(template)) {
+        if (!isUrlTemplate && !prompt.choices.includes(template)) {
           bootSpinner.fail(`Invalid template ${chalk.bold.red(template)}`);
           template = await prompt.run();
         }
       } else {
         template = await prompt.run();
+        isUrlTemplate = /^https?:\/\/.*$/.test(template);
       }
 
       bootSpinner.start();
-      // copy the template
-      await fs.copy(
-        path.resolve(__dirname, `../templates/${template}`),
-        projectPath,
-        {
-          overwrite: true,
-        }
-      );
-      // fix gitignore
-      await fs.move(
-        path.resolve(projectPath, './gitignore'),
-        path.resolve(projectPath, './.gitignore')
-      );
+      if (isUrlTemplate) {
+        const tmpdir = await tmp.dir({ unsafeCleanup: true });
 
+        // name should be the last part of the URL
+        const name = template.split('/').pop();
+        // download the template with yarn or npm
+        const cmd = await getInstallCmd();
+        await execa(cmd, getInstallArgs(cmd, [template]), {
+          cwd: tmpdir.path,
+        });
+
+        const getTemplateFileName = (fileOrDir: string) =>
+          path.resolve(tmpdir.path, 'node_modules', name, fileOrDir);
+
+        // verify the structure of the template
+        //  - template/
+        //  - template.json
+        const templateDir = getTemplateFileName('template');
+        if (!fs.existsSync(templateDir)) {
+          await tmpdir.cleanup();
+          throw new Error(
+            "The specified template doesn't follow the template structure"
+          );
+        }
+
+        // Copy the contents of the template
+        await fs.copy(templateDir, projectPath, {
+          overwrite: true,
+        });
+
+        // Defaults for the templateConfig
+        templateConfig = {
+          dependencies: [],
+          packageJson: {},
+          name: 'custom',
+        };
+        // Load templateConfig from template.json
+        if (fs.existsSync(getTemplateFileName('template.json'))) {
+          const fileDataStr = await fs.readFile(
+            getTemplateFileName('template.json'),
+            { encoding: 'utf-8' }
+          );
+          const fileData = JSON.parse(fileDataStr);
+          templateConfig = {
+            ...templateConfig,
+            ...fileData,
+          };
+        }
+        // remove tmp directory
+        await tmpdir.cleanup();
+      } else {
+        // copy the template
+        await fs.copy(
+          path.resolve(__dirname, `../templates/${template}`),
+          projectPath,
+          {
+            overwrite: true,
+          }
+        );
+        templateConfig = templates[template as keyof typeof templates];
+      }
+      // fix gitignore
+      if (fs.existsSync(path.resolve(projectPath, './gitignore'))) {
+        await fs.move(
+          path.resolve(projectPath, './gitignore'),
+          path.resolve(projectPath, './.gitignore')
+        );
+      }
       // update license year and author
       let license: string = await fs.readFile(
         path.resolve(projectPath, 'LICENSE'),
@@ -212,7 +271,6 @@ prog
         encoding: 'utf-8',
       });
 
-      const templateConfig = templates[template as keyof typeof templates];
       const generatePackageJson = composePackageJson(templateConfig);
 
       // Install deps
@@ -238,20 +296,20 @@ prog
       process.exit(1);
     }
 
-    const templateConfig = templates[template as keyof typeof templates];
     const { dependencies: deps } = templateConfig;
-
-    const installSpinner = ora(Messages.installing(deps.sort())).start();
-    try {
-      const cmd = await getInstallCmd();
-      await execa(cmd, getInstallArgs(cmd, deps));
-      installSpinner.succeed('Installed dependencies');
-      console.log(await Messages.start(pkg));
-    } catch (error) {
-      installSpinner.fail('Failed to install dependencies');
-      logError(error);
-      process.exit(1);
+    if (deps && deps.length > 0) {
+      const installSpinner = ora(Messages.installing(deps.sort())).start();
+      try {
+        const cmd = await getInstallCmd();
+        await execa(cmd, getInstallArgs(cmd, deps));
+        installSpinner.succeed('Installed dependencies');
+      } catch (error) {
+        installSpinner.fail('Failed to install dependencies');
+        logError(error);
+        process.exit(1);
+      }
     }
+    console.log(await Messages.start(pkg));
   });
 
 prog
