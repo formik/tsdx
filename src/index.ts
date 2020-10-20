@@ -2,14 +2,7 @@
 
 import sade from 'sade';
 import glob from 'tiny-glob/sync';
-import {
-  rollup,
-  watch,
-  RollupOptions,
-  OutputOptions,
-  RollupWatchOptions,
-  WatcherOptions,
-} from 'rollup';
+import { rollup, watch, RollupWatchOptions, WatcherOptions } from 'rollup';
 import asyncro from 'asyncro';
 import chalk from 'chalk';
 import * as fs from 'fs-extra';
@@ -40,8 +33,9 @@ import {
   PackageJson,
   WatchOpts,
   BuildOpts,
-  ModuleFormat,
+  AtLeastOneModuleFormat,
   NormalizedOpts,
+  RollupOptionsWithOutput,
 } from './types';
 import { createProgressEstimator } from './createProgressEstimator';
 import { templates } from './templates';
@@ -393,13 +387,10 @@ prog
     }
     try {
       const promise = asyncro
-        .map(
-          buildConfigs,
-          async (inputOptions: RollupOptions & { output: OutputOptions }) => {
-            let bundle = await rollup(inputOptions);
-            await bundle.write(inputOptions.output);
-          }
-        )
+        .map(buildConfigs, async (inputOptions: RollupOptionsWithOutput) => {
+          let bundle = await rollup(inputOptions);
+          await bundle.write(inputOptions.output);
+        })
         .catch((e: any) => {
           throw e;
         })
@@ -424,7 +415,7 @@ async function normalizeOpts(opts: WatchOpts): Promise<NormalizedOpts> {
         return 'esm';
       }
       return format;
-    }) as [ModuleFormat, ...ModuleFormat[]],
+    }) as AtLeastOneModuleFormat,
   };
 }
 

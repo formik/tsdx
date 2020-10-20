@@ -1,5 +1,9 @@
 import { createConfigItem } from '@babel/core';
-import { createBabelInputPluginFactory } from '@rollup/plugin-babel';
+import {
+  createBabelInputPluginFactory,
+  RollupBabelInputPluginOptions,
+} from '@rollup/plugin-babel';
+import { Plugin } from 'rollup';
 import merge from 'lodash.merge';
 
 export const isTruthy = (obj?: any) => {
@@ -48,7 +52,19 @@ export const createConfigItems = (type: any, items: any[]) => {
   });
 };
 
-export const babelPluginTsdx = createBabelInputPluginFactory(() => ({
+// augment with `custom` since it's added in `options` below
+type IBabelPluginTSDX = (
+  options: RollupBabelInputPluginOptions & {
+    custom: any;
+    // not sure if @types/babel__core is incorrect or this is actually ignored
+    passPerPreset: boolean;
+  }
+) => Plugin;
+
+// temp workaround so prettier doesn't reformat 100 lines for indentation
+const shortBabelPlugin = createBabelInputPluginFactory;
+
+export const babelPluginTSDX: IBabelPluginTSDX = shortBabelPlugin(() => ({
   // Passed the plugin options.
   options({ custom: customOptions, ...pluginOptions }: any) {
     return {

@@ -322,7 +322,7 @@ module.exports = {
 The `options` object contains the following:
 
 ```tsx
-export interface TsdxOptions {
+export interface TSDXOptions {
   // path to file
   input: string;
   // Name of package
@@ -375,7 +375,7 @@ module.exports = {
 
 ### Babel
 
-You can add your own `.babelrc` to the root of your project and TSDX will **merge** it with [its own Babel transforms](./src/babelPluginTsdx.ts) (which are mostly for optimization), putting any new presets and plugins at the end of its list.
+You can add your own `.babelrc` to the root of your project and TSDX will **merge** it with [its own Babel transforms](./src/babelPluginTSDX.ts) (which are mostly for optimization), putting any new presets and plugins at the end of its list.
 
 ### Jest
 

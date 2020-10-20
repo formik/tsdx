@@ -1,3 +1,5 @@
+import { RollupOptions, OutputOptions } from 'rollup';
+
 interface SharedOpts {
   // JS target
   target: 'node' | 'browser';
@@ -8,6 +10,7 @@ interface SharedOpts {
 }
 
 export type ModuleFormat = 'cjs' | 'umd' | 'esm' | 'system';
+export type AtLeastOneModuleFormat = [ModuleFormat, ...ModuleFormat[]];
 
 export interface BuildOpts extends SharedOpts {
   name?: string;
@@ -29,10 +32,10 @@ export interface NormalizedOpts
   extends Omit<WatchOpts, 'name' | 'input' | 'format'> {
   name: string;
   input: string[];
-  format: [ModuleFormat, ...ModuleFormat[]];
+  format: AtLeastOneModuleFormat;
 }
 
-export interface TsdxOptions extends SharedOpts {
+export interface TSDXOptions extends SharedOpts {
   // Name of package
   name: string;
   // path to file
@@ -48,6 +51,7 @@ export interface TsdxOptions extends SharedOpts {
   // Only transpile, do not type check (makes compilation faster)
   transpileOnly?: boolean;
 }
+export type AtLeastOneTSDXOptions = [TSDXOptions, ...TSDXOptions[]];
 
 export interface PackageJson {
   name: string;
@@ -59,4 +63,10 @@ export interface PackageJson {
   engines?: {
     node?: string;
   };
+}
+
+export type RollupOptionsWithOutput = RollupOptions & { output: OutputOptions };
+
+export interface TSDXConfig {
+  rollup: (config: RollupOptions, options: TSDXOptions) => RollupOptions;
 }

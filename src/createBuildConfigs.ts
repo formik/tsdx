@@ -1,15 +1,20 @@
-import { RollupOptions, OutputOptions } from 'rollup';
 import * as fs from 'fs-extra';
 import { concatAllArray } from 'jpjs';
 
 import { paths } from './constants';
-import { TsdxOptions, NormalizedOpts } from './types';
+import {
+  TSDXConfig,
+  TSDXOptions,
+  AtLeastOneTSDXOptions,
+  NormalizedOpts,
+  RollupOptionsWithOutput,
+} from './types';
 
 import { createRollupConfig } from './createRollupConfig';
 
 // check for custom tsdx.config.js
-let tsdxConfig = {
-  rollup(config: RollupOptions, _options: TsdxOptions): RollupOptions {
+let tsdxConfig: TSDXConfig = {
+  rollup(config, _options) {
     return config;
   },
 };
@@ -20,11 +25,11 @@ if (fs.existsSync(paths.appConfig)) {
 
 export async function createBuildConfigs(
   opts: NormalizedOpts
-): Promise<Array<RollupOptions & { output: OutputOptions }>> {
+): Promise<RollupOptionsWithOutput[]> {
   const allInputs = concatAllArray(
     opts.input.map((input: string) =>
       createAllFormats(opts, input).map(
-        (options: TsdxOptions, index: number) => ({
+        (options: TSDXOptions, index: number) => ({
           ...options,
           // We want to know if this is the first run for each entryfile
           // for certain plugins (e.g. css)
@@ -35,7 +40,7 @@ export async function createBuildConfigs(
   );
 
   return await Promise.all(
-    allInputs.map(async (options: TsdxOptions, index: number) => {
+    allInputs.map(async (options: TSDXOptions, index: number) => {
       // pass the full rollup config to tsdx.config.js override
       const config = await createRollupConfig(options, index);
       return tsdxConfig.rollup(config, options);
@@ -46,7 +51,7 @@ export async function createBuildConfigs(
 function createAllFormats(
   opts: NormalizedOpts,
   input: string
-): [TsdxOptions, ...TsdxOptions[]] {
+): AtLeastOneTSDXOptions {
   return [
     opts.format.includes('cjs') && {
       ...opts,
@@ -85,5 +90,5 @@ function createAllFormats(
       env: 'production',
       input,
     },
-  ].filter(Boolean) as [TsdxOptions, ...TsdxOptions[]];
+  ].filter(Boolean) as AtLeastOneTSDXOptions;
 }
