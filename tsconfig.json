@@ -7,7 +7,7 @@
     "importHelpers": true,
     "esModuleInterop": true,
     "outDir": "dist",
-    "declaration": false,
+    "declaration": true,
     "module": "commonjs",
     "rootDir": "src",
     "strict": true,

@@ -3,6 +3,10 @@ const autoprefixer = require('autoprefixer');
 const cssnano = require('cssnano');
 
 module.exports = {
+  /**
+   * @param {import('tsdx').RollupOptions} config
+   * @param {import('tsdx').TsdxOptions} options
+   */
   rollup(config, options) {
     config.plugins.push(
       postcss({
