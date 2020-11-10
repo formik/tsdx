@@ -540,17 +540,17 @@ prog
 prog
   .command('lint')
   .describe('Run eslint with Prettier')
-  .example('lint src test')
+  .example('lint ./')
   .option('--fix', 'Fixes fixable errors and warnings')
-  .example('lint src test --fix')
+  .example('lint ./ --fix')
   .option('--ignore-pattern', 'Ignore a pattern')
-  .example('lint src test --ignore-pattern test/foobar.ts')
+  .example('lint ./ --ignore-pattern test/foobar.ts')
   .option(
     '--max-warnings',
     'Exits with non-zero error code if number of warnings exceed this number',
     Infinity
   )
-  .example('lint src test --max-warnings 10')
+  .example('lint ./ --max-warnings 10')
   .option('--write-file', 'Write the config file locally')
   .example('lint --write-file')
   .option('--report-file', 'Write JSON report to file locally')
@@ -565,11 +565,11 @@ prog
       _: string[];
     }) => {
       if (opts['_'].length === 0 && !opts['write-file']) {
-        const defaultInputs = ['src', 'test'].filter(fs.existsSync);
+        const defaultInputs = ['./'];
         opts['_'] = defaultInputs;
         console.log(
           chalk.yellow(
-            `Defaulting to "tsdx lint ${defaultInputs.join(' ')}"`,
+            `Defaulting to "tsdx lint ${defaultInputs}"`,
             '\nYou can override this in the package.json scripts, like "lint": "tsdx lint src otherDir"'
           )
         );
