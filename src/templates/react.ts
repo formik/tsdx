@@ -7,6 +7,8 @@ const reactTemplate: Template = {
   name: 'react',
   dependencies: [
     ...basicTemplate.dependencies,
+    '@testing-library/react',
+    '@testing-library/jest-dom',
     '@types/react',
     '@types/react-dom',
     'react',
@@ -21,6 +23,9 @@ const reactTemplate: Template = {
       ...basicTemplate.packageJson.scripts,
       test: 'tsdx test --passWithNoTests',
     } as PackageJson['scripts'],
+    jest: {
+      setupFilesAfterEnv: ['./jest.setup.ts'],
+    },
   },
 };
 
