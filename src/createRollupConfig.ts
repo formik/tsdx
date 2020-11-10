@@ -11,11 +11,18 @@ import resolve, {
 } from '@rollup/plugin-node-resolve';
 import sourceMaps from 'rollup-plugin-sourcemaps';
 import typescript from 'rollup-plugin-typescript2';
+import * as fs from 'fs-extra';
 import ts from 'typescript';
 
 import { extractErrors } from './errors/extractErrors';
 import { babelPluginTsdx } from './babelPluginTsdx';
-import { TsdxOptions } from './types';
+import { TsdxOptions, PackageJson } from './types';
+
+let appPackageJson: PackageJson;
+
+try {
+  appPackageJson = fs.readJSONSync(paths.appPackageJson);
+} catch (e) {}
 
 const errorCodeOpts = {
   errorMapFilePath: paths.appErrorsJson,
@@ -37,7 +44,7 @@ export async function createRollupConfig(
     opts.minify !== undefined ? opts.minify : opts.env === 'production';
 
   const outputName = [
-    `${paths.appDist}/${safePackageName(opts.name)}`,
+    `${paths.appDist}/${safePackageName(appPackageJson.name)}`,
     opts.format,
     opts.env,
     shouldMinify ? 'min' : '',

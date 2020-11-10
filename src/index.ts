@@ -288,7 +288,7 @@ prog
       await cleanDistFolder();
     }
     if (opts.format.includes('cjs')) {
-      await writeCjsEntryFile(opts.name);
+      await writeCjsEntryFile(appPackageJson.name);
     }
 
     type Killer = execa.ExecaChildProcess | null;
@@ -388,7 +388,7 @@ prog
     await cleanDistFolder();
     const logger = await createProgressEstimator();
     if (opts.format.includes('cjs')) {
-      const promise = writeCjsEntryFile(opts.name).catch(logError);
+      const promise = writeCjsEntryFile(appPackageJson.name).catch(logError);
       logger(promise, 'Creating entry file');
     }
     try {
