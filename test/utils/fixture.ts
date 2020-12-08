@@ -5,6 +5,10 @@ export const rootDir = process.cwd();
 
 shell.config.silent = true;
 
+export function isYarn2() {
+  return !!process.versions.pnp;
+}
+
 export function setupStageWithFixture(
   testDir: string,
   stageName: string,
@@ -15,11 +19,13 @@ export function setupStageWithFixture(
   shell.exec(
     `cp -a ${rootDir}/test/${testDir}/fixtures/${fixtureName}/. ${stagePath}/`
   );
-  shell.ln(
-    '-s',
-    path.join(rootDir, 'node_modules'),
-    path.join(stagePath, 'node_modules')
-  );
+  if (!isYarn2()) {
+    shell.ln(
+      '-s',
+      path.join(rootDir, 'node_modules'),
+      path.join(stagePath, 'node_modules')
+    );
+  }
   shell.cd(stagePath);
 }
 

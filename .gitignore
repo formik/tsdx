@@ -7,3 +7,10 @@ tester-react
 package-lock.json
 # Local Netlify folder
 .netlify
+
+# Files created when running tests under yarn2
+/.yarn
+!/.yarn/releases
+/.yarnrc.yml
+/.pnp.js
+

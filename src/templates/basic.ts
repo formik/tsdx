@@ -9,6 +9,8 @@ const basicTemplate: Template = {
     'typescript',
     'size-limit',
     '@size-limit/preset-small-lib',
+    '@types/jest',
+    '@types/node',
   ],
   packageJson: {
     // name: safeName,
