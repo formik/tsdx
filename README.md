@@ -338,6 +338,8 @@ export interface TsdxOptions {
   tsconfig?: string;
   // Is error extraction running?
   extractErrors?: boolean;
+  // Are output progress animations disabled?
+  noProgress?: boolean;
   // Is minifying?
   minify?: boolean;
   // Is this the very first rollup config (and thus should one-off metadata be extracted)?
@@ -430,6 +432,7 @@ Options
   --onFailure           Run a command on a failed build
   --noClean             Don't clean the dist folder
   --transpileOnly       Skip type checking
+  --noProgress          Don't show progress animations
   -h, --help            Displays this message
 
 Examples
@@ -443,6 +446,7 @@ Examples
   $ tsdx watch --onSuccess "echo Successful build!"
   $ tsdx watch --onFailure "echo The build failed!"
   $ tsdx watch --transpileOnly
+  $ tsdx watch --noProgress
 ```
 
 ### `tsdx build`
@@ -462,6 +466,7 @@ Options
   --extractErrors       Opt-in to extracting invariant error codes
   --tsconfig            Specify your custom tsconfig path (default <root-folder>/tsconfig.json)
   --transpileOnly       Skip type checking
+  --noProgress          Don't show progress animations
   -h, --help            Displays this message
 
 Examples
@@ -472,6 +477,7 @@ Examples
   $ tsdx build --extractErrors
   $ tsdx build --tsconfig ./tsconfig.foo.json
   $ tsdx build --transpileOnly
+  $ tsdx build --noProgress
 ```
 
 ### `tsdx test`

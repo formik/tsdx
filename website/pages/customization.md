@@ -35,6 +35,8 @@ export interface TsdxOptions {
   tsconfig?: string;
   // Is error extraction running?
   extractErrors?: boolean;
+  // Are output progress animations disabled?
+  noProgress?: boolean;
   // Is minifying?
   minify?: boolean;
   // Is this the very first rollup config (and thus should one-off metadata be extracted)?
