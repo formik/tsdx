@@ -27,7 +27,7 @@ const basicTemplate: Template = {
       build: 'tsdx build',
       test: 'tsdx test',
       lint: 'tsdx lint',
-      prepare: 'tsdx build',
+      prepare: 'husky install && tsdx build',
       size: 'size-limit',
       analyze: 'size-limit --why',
     },
@@ -44,11 +44,6 @@ const basicTemplate: Template = {
       },
     ],
     */
-    husky: {
-      hooks: {
-        'pre-commit': 'tsdx lint',
-      },
-    },
     prettier: {
       printWidth: 80,
       semi: true,
