@@ -382,6 +382,32 @@ You can add your own `.babelrc` to the root of your project and TSDX will **merg
 
 You can add your own `jest.config.js` to the root of your project and TSDX will **shallow merge** it with [its own Jest config](./src/createJestConfig.ts).
 
+#### Jest with ESM
+
+If you're receiving errors such as `Jest encountered an unexpected token` or `SyntaxError: Cannot use import statement outside a module` from Jest when using dependencies that are written in ESM, then you will need to install `@babel/plugin-transform-modules-commonjs` as a dev dependency and add a `babel.config.js` or `babel.config.cjs` file with the following configuration:
+
+```js
+module.exports = {
+  env: {
+    test: {
+      plugins: ['@babel/plugin-transform-modules-commonjs'],
+    },
+  },
+};
+```
+
+You will also need to instruct Jest to transform the packages, and any of their dependencies. As an example, here is how you would transform a package called `some-esm-package`:
+
+```js
+module.exports = {
+  transformIgnorePatterns: [
+    '[/\\\\]node_modules[/\\\\](?!some-esm-package).+\\.(js|jsx)$',
+  ],
+};
+```
+
+Read more here: https://github.com/facebook/jest/issues/2550#issuecomment-381718006
+
 ### ESLint
 
 You can add your own `.eslintrc.js` to the root of your project and TSDX will **deep merge** it with [its own ESLint config](./src/createEslintConfig.ts).
