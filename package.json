@@ -110,12 +110,14 @@
     "@types/shelljs": "^0.8.5",
     "@types/styled-components": "^5.0.1",
     "autoprefixer": "^9.7.4",
+    "babel-jest": "^26.6.3",
     "babel-plugin-replace-identifiers": "^0.1.1",
     "cssnano": "^4.1.10",
     "doctoc": "^1.4.0",
     "husky": "^4.2.2",
+    "lodash": "^4.17.21",
     "np": "^6.4.0",
-    "pretty-quick": "^2.0.0",
+    "pretty-quick": "^2.0.2",
     "react": "^16.8.6",
     "react-dom": "^16.13.0",
     "react-is": "^16.13.0",
@@ -123,6 +125,7 @@
     "styled-components": "^5.0.1",
     "tiny-invariant": "^1.1.0",
     "tiny-warning": "^1.0.3",
+    "type-fest": "^1.0.2",
     "yarn-deduplicate": "^2.1.1"
   },
   "husky": {
