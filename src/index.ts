@@ -33,8 +33,7 @@ import {
   getNodeEngineRequirement,
 } from './utils';
 import { concatAllArray } from 'jpjs';
-import getInstallCmd from './getInstallCmd';
-import getInstallArgs from './getInstallArgs';
+import getPackageManager from './getPackageManager';
 import { Input, Select } from 'enquirer';
 import {
   PackageJson,
@@ -240,8 +239,8 @@ prog
 
     const installSpinner = ora(Messages.installing(deps.sort())).start();
     try {
-      const cmd = await getInstallCmd();
-      await execa(cmd, getInstallArgs(cmd, deps));
+      const pm = await getPackageManager();
+      await execa(pm.name, pm.getInstallArgs(deps));
       installSpinner.succeed('Installed dependencies');
       console.log(await Messages.start(pkg));
     } catch (error) {

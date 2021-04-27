@@ -1,5 +1,5 @@
 import chalk from 'chalk';
-import getInstallCmd from './getInstallCmd';
+import getPackageManager from './getPackageManager';
 import * as Output from './output';
 
 // This was copied from Razzle. Lots of unused stuff.
@@ -61,14 +61,7 @@ Creating ${chalk.bold(chalk.green(projectName))}...
 };
 
 export const start = async function(projectName: string) {
-  const cmd = await getInstallCmd();
-
-  const commands = {
-    install: cmd === 'npm' ? 'npm install' : 'yarn install',
-    build: cmd === 'npm' ? 'npm run build' : 'yarn build',
-    start: cmd === 'npm' ? 'npm run start' : 'yarn start',
-    test: cmd === 'npm' ? 'npm test' : 'yarn test',
-  };
+  const commands = await getPackageManager();
 
   return `
   ${chalk.green('Awesome!')} You're now ready to start coding.
