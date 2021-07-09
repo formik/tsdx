@@ -16,7 +16,7 @@ describe('integration :: tsdx build :: options', () => {
   });
 
   it('should create errors/ dir with --extractErrors', () => {
-    const output = execWithCache('node ../dist/index.js build --extractErrors');
+    const output = execWithCache('node ../dist/index.js build --legacy --extractErrors');
 
     expect(shell.test('-f', 'errors/ErrorDev.js')).toBeTruthy();
     expect(shell.test('-f', 'errors/ErrorProd.js')).toBeTruthy();
@@ -26,7 +26,7 @@ describe('integration :: tsdx build :: options', () => {
   });
 
   it('should have correct errors/codes.json', () => {
-    const output = execWithCache('node ../dist/index.js build --extractErrors');
+    const output = execWithCache('node ../dist/index.js build --legacy --extractErrors');
 
     const errors = require(`../../${stageName}/errors/codes.json`);
     expect(errors['0']).toBe('error occurred! o no');
@@ -37,16 +37,14 @@ describe('integration :: tsdx build :: options', () => {
   });
 
   it('should compile files into a dist directory', () => {
-    const output = execWithCache('node ../dist/index.js build --extractErrors');
+    const output = execWithCache('node ../dist/index.js build --legacy --extractErrors');
 
-    expect(shell.test('-f', 'dist/index.js')).toBeTruthy();
+    expect(shell.test('-f', 'dist/index.cjs')).toBeTruthy();
+    expect(shell.test('-f', 'dist/build-options.development.cjs')).toBeTruthy();
     expect(
-      shell.test('-f', 'dist/build-options.cjs.development.js')
+      shell.test('-f', 'dist/build-options.production.min.cjs')
     ).toBeTruthy();
-    expect(
-      shell.test('-f', 'dist/build-options.cjs.production.min.js')
-    ).toBeTruthy();
-    expect(shell.test('-f', 'dist/build-options.esm.js')).toBeTruthy();
+    expect(shell.test('-f', 'dist/build-options.min.mjs')).toBeTruthy();
 
     expect(shell.test('-f', 'dist/index.d.ts')).toBeTruthy();
 

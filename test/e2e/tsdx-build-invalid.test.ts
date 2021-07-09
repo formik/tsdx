@@ -16,21 +16,21 @@ describe('tsdx build :: invalid build', () => {
   });
 
   it('should fail gracefully with exit code 1 when build failed', () => {
-    const output = execWithCache('node ../dist/index.js build');
+    const output = execWithCache('node ../dist/index.js build --legacy');
     expect(output.code).toBe(1);
   });
 
   it('should only transpile and not type check', () => {
-    const output = execWithCache('node ../dist/index.js build --transpileOnly');
+    const output = execWithCache('node ../dist/index.js build --legacy --transpileOnly');
 
-    expect(shell.test('-f', 'dist/index.js')).toBeTruthy();
+    expect(shell.test('-f', 'dist/index.cjs')).toBeTruthy();
     expect(
-      shell.test('-f', 'dist/build-invalid.cjs.development.js')
+      shell.test('-f', 'dist/build-invalid.development.cjs')
     ).toBeTruthy();
     expect(
-      shell.test('-f', 'dist/build-invalid.cjs.production.min.js')
+      shell.test('-f', 'dist/build-invalid.production.min.cjs')
     ).toBeTruthy();
-    expect(shell.test('-f', 'dist/build-invalid.esm.js')).toBeTruthy();
+    expect(shell.test('-f', 'dist/build-invalid.min.mjs')).toBeTruthy();
 
     expect(shell.test('-f', 'dist/index.d.ts')).toBeTruthy();
 

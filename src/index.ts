@@ -55,7 +55,7 @@ let appPackageJson: PackageJson;
 
 try {
   appPackageJson = fs.readJSONSync(paths.appPackageJson);
-} catch (e) {}
+} catch (e) { }
 
 export const isDir = (name: string) =>
   fs
@@ -73,10 +73,10 @@ async function jsOrTs(filename: string) {
   const extension = (await isFile(resolveApp(filename + '.ts')))
     ? '.ts'
     : (await isFile(resolveApp(filename + '.tsx')))
-    ? '.tsx'
-    : (await isFile(resolveApp(filename + '.jsx')))
-    ? '.jsx'
-    : '.js';
+      ? '.tsx'
+      : (await isFile(resolveApp(filename + '.jsx')))
+        ? '.jsx'
+        : '.js';
 
   return resolveApp(`${filename}${extension}`);
 }
@@ -91,7 +91,7 @@ async function getInputs(
         entries && entries.length
           ? entries
           : (source && resolveApp(source)) ||
-              ((await isDir(resolveApp('src'))) && (await jsOrTs('src/index')))
+          ((await isDir(resolveApp('src'))) && (await jsOrTs('src/index')))
       )
       .map(file => glob(file))
   );
@@ -290,6 +290,9 @@ prog
     if (opts.format.includes('cjs')) {
       await writeCjsEntryFile(opts.name);
     }
+    if (opts.format.includes('esm')) {
+      await writeMjsEntryFile(opts.name);
+    }
 
     type Killer = execa.ExecaChildProcess | null;
 
@@ -355,7 +358,7 @@ prog
           } else {
             successKiller = run(opts.onSuccess);
           }
-        } catch (_error) {}
+        } catch (_error) { }
       }
     });
   });
@@ -371,6 +374,8 @@ prog
   .example('build --name Foo')
   .option('--format', 'Specify module format(s)', 'cjs,esm')
   .example('build --format cjs,esm')
+  .option('--legacy', 'Babel transpile and emit ES5.')
+  .example('build --legacy')
   .option('--tsconfig', 'Specify custom tsconfig path')
   .example('build --tsconfig ./tsconfig.foo.json')
   .option('--transpileOnly', 'Skip type checking')
@@ -389,7 +394,11 @@ prog
     const logger = await createProgressEstimator();
     if (opts.format.includes('cjs')) {
       const promise = writeCjsEntryFile(opts.name).catch(logError);
-      logger(promise, 'Creating entry file');
+      logger(promise, 'Creating CJS entry file');
+    }
+    if (opts.format.includes('esm')) {
+      const promise = writeMjsEntryFile(opts.name).catch(logError);
+      logger(promise, 'Creating MJS entry file');
     }
     try {
       const promise = asyncro
@@ -438,12 +447,20 @@ function writeCjsEntryFile(name: string) {
 'use strict'
 
 if (process.env.NODE_ENV === 'production') {
-  ${baseLine}.cjs.production.min.js')
+  ${baseLine}.production.min.cjs')
 } else {
-  ${baseLine}.cjs.development.js')
+  ${baseLine}.development.cjs')
 }
 `;
-  return fs.outputFile(path.join(paths.appDist, 'index.js'), contents);
+  return fs.outputFile(path.join(paths.appDist, 'index.cjs'), contents);
+}
+
+function writeMjsEntryFile(name: string) {
+  const contents = `
+export { default } from './${name}.min.mjs';
+export * from './${name}.min.mjs';
+  `;
+  return fs.outputFile(path.join(paths.appDist, 'index.mjs'), contents);
 }
 
 function getAuthorName() {
@@ -500,6 +517,7 @@ prog
         opts.config ? path.dirname(opts.config) : paths.appRoot
       ),
       ...appPackageJson.jest,
+      passWithNoTests: true,
     };
 
     // Allow overriding with jest.config

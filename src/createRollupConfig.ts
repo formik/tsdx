@@ -33,15 +33,20 @@ export async function createRollupConfig(
     ...opts,
   });
 
+  const isEsm = opts.format.includes('es') || opts.format.includes('esm');
+
   const shouldMinify =
-    opts.minify !== undefined ? opts.minify : opts.env === 'production';
+    opts.minify !== undefined ? opts.minify : opts.env === 'production' || isEsm;
+
+  let formatString = ['esm', 'cjs'].includes(opts.format) ? '' : opts.format;
+  let fileExtension = opts.format === 'esm' ? 'mjs' : 'cjs';
 
   const outputName = [
     `${paths.appDist}/${safePackageName(opts.name)}`,
-    opts.format,
+    formatString,
     opts.env,
     shouldMinify ? 'min' : '',
-    'js',
+    fileExtension,
   ]
     .filter(Boolean)
     .join('.');
@@ -102,14 +107,18 @@ export async function createRollupConfig(
       esModule: Boolean(tsCompilerOptions?.esModuleInterop),
       name: opts.name || safeVariableName(opts.name),
       sourcemap: true,
-      globals: { react: 'React', 'react-native': 'ReactNative' },
+      globals: { react: 'React', 'react-native': 'ReactNative', 'lodash-es': 'lodashEs', 'lodash/fp': 'lodashFp' },
       exports: 'named',
     },
     plugins: [
       !!opts.extractErrors && {
-        async transform(source: any) {
-          await findAndRecordErrorCodes(source);
-          return source;
+        async transform(code: string) {
+          try {
+            await findAndRecordErrorCodes(code);
+          } catch (e) {
+            return null;
+          }
+          return { code, map: null };
         },
       },
       resolve({
@@ -118,7 +127,7 @@ export async function createRollupConfig(
           'main',
           opts.target !== 'node' ? 'browser' : undefined,
         ].filter(Boolean) as string[],
-        extensions: [...RESOLVE_DEFAULTS.extensions, '.jsx'],
+        extensions: [...RESOLVE_DEFAULTS.extensions, '.cjs', '.mjs', '.jsx'],
       }),
       // all bundled external modules need to be converted from CJS to ESM
       commonjs({
@@ -189,30 +198,48 @@ export async function createRollupConfig(
         extensions: [...DEFAULT_BABEL_EXTENSIONS, 'ts', 'tsx'],
         passPerPreset: true,
         custom: {
-          targets: opts.target === 'node' ? { node: '10' } : undefined,
+          targets: opts.target === 'node' ? { node: '14' } : undefined,
           extractErrors: opts.extractErrors,
           format: opts.format,
         },
         babelHelpers: 'bundled',
       }),
       opts.env !== undefined &&
-        replace({
-          'process.env.NODE_ENV': JSON.stringify(opts.env),
-        }),
+      replace({
+        preventAssignment: true,
+        'process.env.NODE_ENV': JSON.stringify(opts.env),
+      }),
       sourceMaps(),
       shouldMinify &&
-        terser({
-          sourcemap: true,
-          output: { comments: false },
-          compress: {
-            keep_infinity: true,
-            pure_getters: true,
-            passes: 10,
-          },
-          ecma: 5,
-          toplevel: opts.format === 'cjs',
-          warnings: true,
-        }),
+      terser({
+        output: { comments: false },
+        compress: {
+          keep_infinity: true,
+          pure_getters: true,
+          passes: 10,
+        },
+        ecma: opts.legacy ? 5 : 2020,
+        module: isEsm,
+        toplevel: opts.format === 'cjs' || isEsm,
+        warnings: true,
+      }),
+      /**
+       * Ensure there's an empty default export to prevent runtime errors.
+       *
+       * @see https://www.npmjs.com/package/rollup-plugin-export-default
+       */
+       {
+        renderChunk: async (code: string, chunk: any) => {
+          if (chunk.exports.includes('default') || !isEsm) {
+            return null;
+          }
+
+          return {
+            code: `${code}\nexport default {};`,
+            map: null,
+          };
+        },
+      },
     ],
   };
 }

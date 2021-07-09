@@ -30,23 +30,26 @@ const babelParserOptions: ParserOptions = {
 } as ParserOptions; // workaround for trailingFunctionCommas syntax
 
 export async function extractErrors(opts: any) {
-  if (!opts || !('errorMapFilePath' in opts)) {
+  if (!opts || !opts.errorMapFilePath) {
     throw new Error(
       'Missing options. Ensure you pass an object with `errorMapFilePath`.'
     );
   }
 
-  if (!opts.name || !('name' in opts)) {
+  if (!opts.name || !opts.name) {
     throw new Error('Missing options. Ensure you pass --name flag to tsdx');
   }
 
   const errorMapFilePath = opts.errorMapFilePath;
   let existingErrorMap: any;
   try {
-    // Using `fs.readFile` instead of `require` here, because `require()`
-    // calls are cached, and the cache map is not properly invalidated after
-    // file changes.
-    existingErrorMap = JSON.parse(await fs.readFile(errorMapFilePath, 'utf8'));
+    /**
+     * Using `fs.readFile` instead of `require` here, because `require()` calls
+     * are cached, and the cache map is not properly invalidated after file
+     * changes.
+     */
+    const fileContents = await fs.readFile(errorMapFilePath, 'utf-8');
+    existingErrorMap = JSON.parse(fileContents);
   } catch (e) {
     existingErrorMap = {};
   }

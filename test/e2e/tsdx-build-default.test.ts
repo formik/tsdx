@@ -16,16 +16,14 @@ describe('tsdx build :: zero-config defaults', () => {
   });
 
   it('should compile files into a dist directory', () => {
-    const output = execWithCache('node ../dist/index.js build');
+    const output = execWithCache('node ../dist/index.js build --legacy');
 
-    expect(shell.test('-f', 'dist/index.js')).toBeTruthy();
+    expect(shell.test('-f', 'dist/index.cjs')).toBeTruthy();
+    expect(shell.test('-f', 'dist/build-default.development.cjs')).toBeTruthy();
     expect(
-      shell.test('-f', 'dist/build-default.cjs.development.js')
+      shell.test('-f', 'dist/build-default.production.min.cjs')
     ).toBeTruthy();
-    expect(
-      shell.test('-f', 'dist/build-default.cjs.production.min.js')
-    ).toBeTruthy();
-    expect(shell.test('-f', 'dist/build-default.esm.js')).toBeTruthy();
+    expect(shell.test('-f', 'dist/build-default.min.mjs')).toBeTruthy();
 
     expect(shell.test('-f', 'dist/index.d.ts')).toBeTruthy();
 
@@ -33,7 +31,7 @@ describe('tsdx build :: zero-config defaults', () => {
   });
 
   it("shouldn't compile files in test/ or types/", () => {
-    const output = execWithCache('node ../dist/index.js build');
+    const output = execWithCache('node ../dist/index.js build --legacy');
 
     expect(shell.test('-d', 'dist/test/')).toBeFalsy();
     expect(shell.test('-d', 'dist/types/')).toBeFalsy();
@@ -42,82 +40,99 @@ describe('tsdx build :: zero-config defaults', () => {
   });
 
   it('should create the library correctly', async () => {
-    const output = execWithCache('node ../dist/index.js build');
+    const output = execWithCache('node ../dist/index.js build --legacy');
 
-    const lib = require(`../../${stageName}/dist`);
-    expect(lib.returnsTrue()).toBe(true);
-    expect(lib.__esModule).toBe(true); // test that ESM -> CJS interop was output
+    /**
+     * Cannot test ESM import here since it is emitted as CJS. Getting tsdx to
+     * compile itself will be a future goal.
+     *
+     * @todo Compile TSDX with itself so `import` statements can be tested
+     */
+    // const libs = [
+    //   require(`../../${stageName}/dist/index.cjs`),
+    //   await import(`../../${stageName}/dist/index.mjs`)
+    // ];
+    /**
+     * So just test CJS import for now. The package.jsons aren't simulated using
+     * the CLI, so we're resolving it ourselves here to dist/index.cjs.
+     */
+    const libs = [require(`../../${stageName}/dist/index.cjs`)];
 
-    // syntax tests
-    expect(lib.testNullishCoalescing()).toBe(true);
-    expect(lib.testOptionalChaining()).toBe(true);
-    // can't use an async generator in Jest yet, so use next().value instead of yield
-    expect(lib.testGenerator().next().value).toBe(true);
-    expect(await lib.testAsync()).toBe(true);
+    for (const lib of libs) {
+      expect(lib.returnsTrue()).toBe(true);
+      expect(lib.__esModule).toBe(true); // test that ESM -> CJS interop was output
 
-    expect(output.code).toBe(0);
+      // syntax tests
+      expect(lib.testNullishCoalescing()).toBe(true);
+      expect(lib.testOptionalChaining()).toBe(true);
+      // can't use an async generator in Jest yet, so use next().value instead of yield
+      expect(lib.testGenerator().next().value).toBe(true);
+      expect(await lib.testAsync()).toBe(true);
+
+      expect(output.code).toBe(0);
+    }
   });
 
   it('should bundle regeneratorRuntime', () => {
-    const output = execWithCache('node ../dist/index.js build');
+    const output = execWithCache('node ../dist/index.js build --legacy');
     expect(output.code).toBe(0);
 
-    const matched = grep(/regeneratorRuntime = r/, ['dist/build-default.*.js']);
+    const matched = grep(/regeneratorRuntime = r/, [
+      'dist/build-default.*.cjs',
+    ]);
     expect(matched).toBeTruthy();
   });
 
   it('should use lodash for the CJS build', () => {
-    const output = execWithCache('node ../dist/index.js build');
+    const output = execWithCache('node ../dist/index.js build --legacy');
     expect(output.code).toBe(0);
 
-    const matched = grep(/lodash/, ['dist/build-default.cjs.*.js']);
+    const matched = grep(/lodash/, ['dist/build-default.*.cjs']);
     expect(matched).toBeTruthy();
   });
 
   it('should use lodash-es for the ESM build', () => {
-    const output = execWithCache('node ../dist/index.js build');
+    const output = execWithCache('node ../dist/index.js build --legacy');
     expect(output.code).toBe(0);
 
-    const matched = grep(/lodash-es/, ['dist/build-default.esm.js']);
+    const matched = grep(/lodash-es/, ['dist/build-default.min.mjs']);
     expect(matched).toBeTruthy();
   });
 
   it("shouldn't replace lodash/fp", () => {
-    const output = execWithCache('node ../dist/index.js build');
+    const output = execWithCache('node ../dist/index.js build --legacy');
     expect(output.code).toBe(0);
 
-    const matched = grep(/lodash\/fp/, ['dist/build-default.*.js']);
+    const matched = grep(/lodash\/fp/, ['dist/build-default.*.cjs']);
     expect(matched).toBeTruthy();
   });
 
   it('should clean the dist directory before rebuilding', () => {
-    let output = execWithCache('node ../dist/index.js build');
+    let output = execWithCache('node ../dist/index.js build --legacy');
     expect(output.code).toBe(0);
 
     shell.mv('package.json', 'package-og.json');
     shell.mv('package2.json', 'package.json');
 
     // cache bust because we want to re-run this command with new package.json
-    output = execWithCache('node ../dist/index.js build', { noCache: true });
-    expect(shell.test('-f', 'dist/index.js')).toBeTruthy();
+    output = execWithCache('node ../dist/index.js build --legacy', { noCache: true });
+    expect(shell.test('-f', 'dist/index.cjs')).toBeTruthy();
 
     // build-default files have been cleaned out
+    expect(shell.test('-f', 'dist/build-default.development.cjs')).toBeFalsy();
     expect(
-      shell.test('-f', 'dist/build-default.cjs.development.js')
+      shell.test('-f', 'dist/build-default.production.min.cjs')
     ).toBeFalsy();
-    expect(
-      shell.test('-f', 'dist/build-default.cjs.production.min.js')
-    ).toBeFalsy();
-    expect(shell.test('-f', 'dist/build-default.esm.js')).toBeFalsy();
+    expect(shell.test('-f', 'dist/build-default.min.mjs')).toBeFalsy();
 
     // build-default-2 files have been added
     expect(
-      shell.test('-f', 'dist/build-default-2.cjs.development.js')
+      shell.test('-f', 'dist/build-default-2.development.cjs')
     ).toBeTruthy();
     expect(
-      shell.test('-f', 'dist/build-default-2.cjs.production.min.js')
+      shell.test('-f', 'dist/build-default-2.production.min.cjs')
     ).toBeTruthy();
-    expect(shell.test('-f', 'dist/build-default-2.esm.js')).toBeTruthy();
+    expect(shell.test('-f', 'dist/build-default-2.min.mjs')).toBeTruthy();
 
     expect(shell.test('-f', 'dist/index.d.ts')).toBeTruthy();
 

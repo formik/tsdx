@@ -140,13 +140,13 @@ export const sum = (a: number, b: number) => {
 if (process.env.NODE_ENV === 'production') {
   module.exports = require('./mylib.cjs.production.js');
 } else {
-  module.exports = require('./mylib.cjs.development.js');
+  module.exports = require('./mylib.development.cjs');
 }
 ```
 
 ```js
 // CommonJS Development Build
-// ./dist/mylib.cjs.development.js
+// ./dist/mylib.development.cjs
 'use strict';
 
 const sum = (a, b) => {
@@ -158,7 +158,7 @@ const sum = (a, b) => {
 };
 
 exports.sum = sum;
-//# sourceMappingURL=mylib.cjs.development.js.map
+//# sourceMappingURL=mylib.development.cjs.map
 ```
 
 ```js
